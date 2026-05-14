@@ -9,6 +9,7 @@ export function ExplorerPage() {
   const [tab, setTab] = useState('blocks');
   const [selectedBlock, setSelectedBlock] = useState<any | null>(null);
   const [selectedTx, setSelectedTx] = useState<any | null>(null);
+  const [txOriginBlock, setTxOriginBlock] = useState<any | null>(null);
   const [blockPage, setBlockPage] = useState(1);
   const [txPage, setTxPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -130,7 +131,7 @@ export function ExplorerPage() {
               },
             ]}
             data={txsInBlock as unknown as Record<string, unknown>[]}
-            onRowClick={row => setSelectedTx(row)}
+            onRowClick={row => { setTxOriginBlock(selectedBlock); setSelectedBlock(null); setSelectedTx(row); }}
           />
         </Card>
       </div>
@@ -142,7 +143,7 @@ export function ExplorerPage() {
     const tx = selectedTx;
     const id = Array.isArray(tx.tx_id) ? formatTxId(tx.tx_id) : (tx.tx_id || tx.id);
     const fullId = tx.fullId || id;
-    const height = tx.block_num || tx.blockHeight;
+    const height = tx.block_num ?? tx.blockHeight ?? (txOriginBlock ? (txOriginBlock.header?.block_number ?? txOriginBlock.height) : undefined);
     const chaincode = tx.contract_id || tx.chaincode;
     const fn = tx.function_name || tx.function;
     const caller = tx.creator_msp_id || tx.caller;
@@ -151,9 +152,12 @@ export function ExplorerPage() {
 
     return (
       <div>
-        <button onClick={() => setSelectedTx(null)}
+        <button onClick={() => {
+            setSelectedTx(null);
+            if (txOriginBlock) { setSelectedBlock(txOriginBlock); setTxOriginBlock(null); }
+          }}
           className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-emerald-400 mb-5 transition-colors">
-          <Icons.ArrowLeft size={15} /> Back
+          <Icons.ArrowLeft size={15} /> {txOriginBlock ? `Back to Block #${txOriginBlock.header?.block_number ?? txOriginBlock.height}` : 'Back'}
         </button>
 
         <div className="flex items-center gap-3 mb-6">
@@ -176,10 +180,11 @@ export function ExplorerPage() {
               <DetailRow label="TX ID" value={<HashDisplay hash={fullId} />} />
               <DetailRow label="Block Height" value={
                 <span className="font-mono text-emerald-400 cursor-pointer hover:underline"
-                  onClick={() => { 
+                  onClick={() => {
                     const b = (blocks || []).find((b: any) => (b.header?.block_number ?? b.height) === height);
                     if (b) {
                       setSelectedTx(null);
+                      setTxOriginBlock(null);
                       setSelectedBlock(b);
                     }
                   }}>
