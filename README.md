@@ -1,87 +1,141 @@
-# Welcome to React Router!
+# Qorvum Explorer
 
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
-
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+Web UI untuk memonitor dan mengoperasikan node Qorvum secara real-time. Dibangun dengan React Router v7, TypeScript, dan Tailwind CSS.
 
 ---
 
-Built with ❤️ using React Router.
+## Fitur
+
+| Halaman | Deskripsi |
+|---|---|
+| **Dashboard** | Ringkasan jaringan: blok terbaru, transaksi, status node, kontrak aktif |
+| **Block Explorer** | Browse blok dan transaksi dengan detail lengkap per entry |
+| **Contracts** | Daftar kontrak yang terdeploy beserta fungsi-fungsinya |
+| **PKI & Certs** | Manajemen user: enroll, list, revoke; tampilkan detail sertifikat |
+| **Node Monitor** | Status dan topologi semua node yang terhubung via P2P |
+| **Event Log** | Stream event real-time (block, tx, node_status) + API reference |
+| **API Playground** | Coba endpoint REST langsung dari browser |
+
+**Koneksi real-time:** Semua data live menggunakan WebSocket (`/api/v1/ws`). Tidak ada polling berlebihan — blok dan transaksi baru muncul otomatis tanpa refresh.
+
+---
+
+## Prerequisites
+
+- Node.js 20+
+- Node Qorvum yang sedang berjalan (default `http://localhost:8080`)
+
+---
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Explorer tersedia di `http://localhost:5173`.
+
+**Arahkan ke node Qorvum:** Buka Settings (ikon gear di top bar) → isi Gateway URL → klik Test.
+
+Default URL: `http://localhost:8080`. Disimpan di `localStorage`, persist antar session.
+
+---
+
+## Build Production
+
+```bash
+npm run build
+npm start
+```
+
+Server berjalan di port `3000`.
+
+---
+
+## Docker
+
+```bash
+docker build -t qorvum-explorer .
+docker run -p 3000:3000 qorvum-explorer
+```
+
+---
+
+## Konfigurasi
+
+Semua konfigurasi disimpan di `localStorage` browser — tidak ada environment variable yang diperlukan untuk menjalankan explorer.
+
+| Setting | Default | Keterangan |
+|---|---|---|
+| Gateway URL | `http://localhost:8080` | Alamat node Qorvum yang dituju |
+| Token | — | JWT Bearer token, otomatis diisi setelah login |
+| Token Expiry | — | Direfresh otomatis 5 menit sebelum kadaluarsa |
+
+Untuk mengubah gateway URL setelah login: Settings → Gateway Configuration.
+
+---
+
+## Autentikasi
+
+Explorer menggunakan JWT Bearer token dari Qorvum gateway. Login dari halaman login atau via Settings.
+
+```
+Username: admin
+Password: <sesuai yang di-bootstrap di node>
+```
+
+Token disimpan di `localStorage` dan dipakai untuk semua request API. Session otomatis redirect ke login saat token expired.
+
+---
+
+## Struktur Project
+
+```
+app/
+├── components/
+│   ├── ui.tsx            # Design system: Card, Badge, Table, Button, dll
+│   ├── icons.tsx         # Icon set (Lucide-style, manual SVG)
+│   ├── layout.tsx        # Sidebar, TopBar, Layout wrapper
+│   └── ConnectionBanner  # Banner disconnect / reconnect
+├── lib/
+│   ├── api.ts            # REST client — semua call ke gateway
+│   ├── hooks.ts          # React hooks: useHealth, useBlocks, useTransactions, dll
+│   ├── ws-context.tsx    # WebSocket context (single shared connection)
+│   ├── config.ts         # localStorage config store
+│   └── utils.ts          # Helper: timeAgo, format, dll
+└── pages/
+    ├── Dashboard.tsx
+    ├── Explorer.tsx
+    ├── Contracts.tsx
+    ├── Pki.tsx
+    ├── Nodes.tsx
+    ├── EventsApi.tsx
+    └── Login.tsx
+```
+
+---
+
+## WebSocket Events
+
+Explorer subscribe ke tiga topic saat connect:
+
+| Topic | Data | Trigger |
+|---|---|---|
+| `blocks` | `{ block_num, tx_count, timestamp }` | Setiap blok baru di-commit |
+| `tx` | `{ tx_id, block_num, contract_id, function_name, caller, success }` | Setiap transaksi selesai |
+| `node_status` | `{ status, peer_count, latest_block, mode, peers[] }` | Peer join/leave jaringan |
+
+Koneksi WebSocket otomatis reconnect dengan exponential backoff (max 30 detik) jika terputus.
+
+---
+
+## Type Check
+
+```bash
+npm run typecheck
+```
+
+---
+
+Apache License 2.0
