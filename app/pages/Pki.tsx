@@ -3,6 +3,7 @@ import { Card, CardHeader, CardBody, Badge, Table, Tabs, Modal, Button, Input, S
 import * as Icons from '../components/icons';
 import { useUsers } from '../lib/hooks';
 import { api, ApiError } from '../lib/api';
+import type { EnrolledUser, RevokeResponse } from '../lib/api';
 
 export function PkiPage() {
   const [tab, setTab] = useState('overview');
@@ -16,10 +17,13 @@ export function PkiPage() {
   const [enrollData, setEnrollData] = useState({
     username: '',
     password: '',
+    email: '',
     org: 'Org1',
     roles: 'EMPLOYEE',
     days: '365'
   });
+  const [enrolledResult, setEnrolledResult] = useState<EnrolledUser | null>(null);
+  const [revokeResult, setRevokeResult] = useState<RevokeResponse | null>(null);
   const [revocationReason, setRevocationReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,13 +32,15 @@ export function PkiPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.enrollUser({
+      const result = await api.enrollUser({
         username: enrollData.username,
         password: enrollData.password || undefined,
+        email: enrollData.email || undefined,
         org: enrollData.org,
         roles: enrollData.roles.split(',').map(r => r.trim()),
         days: parseInt(enrollData.days)
       });
+      setEnrolledResult(result);
       setEnrollModal(false);
       refetchUsers();
     } catch (err) {
@@ -49,7 +55,8 @@ export function PkiPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.revokeUser(revokeTarget.username, revocationReason);
+      const result = await api.revokeUser(revokeTarget.username, revocationReason);
+      setRevokeResult(result);
       setRevokeTarget(null);
       setRevocationReason('');
       refetchUsers();
@@ -78,6 +85,43 @@ export function PkiPage() {
           </Button>
         </div>
       </div>
+
+      {/* ── Enrollment success banner ── */}
+      {enrolledResult && (
+        <div className="mb-4 p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/20 flex items-start gap-3">
+          <Icons.ShieldCheck size={16} className="text-emerald-400 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-emerald-400 mb-1">User enrolled successfully</p>
+            <p className="text-xs text-zinc-400 mb-2">{enrolledResult.message}</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-zinc-500">
+              <span><span className="text-zinc-400">Username:</span> {enrolledResult.username}@{enrolledResult.org}</span>
+              <span><span className="text-zinc-400">Expires:</span> {new Date(enrolledResult.expires_at * 1000).toLocaleDateString()}</span>
+              <span className="break-all"><span className="text-zinc-400">Fingerprint:</span> <span className="font-mono text-emerald-500/80">{enrolledResult.cert_fingerprint.slice(0, 24)}…</span></span>
+            </div>
+          </div>
+          <button type="button" aria-label="Dismiss" onClick={() => setEnrolledResult(null)} className="text-zinc-600 hover:text-zinc-400 shrink-0">
+            <Icons.X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* ── Revocation success banner ── */}
+      {revokeResult && (
+        <div className="mb-4 p-4 rounded-xl bg-red-500/8 border border-red-500/20 flex items-start gap-3">
+          <Icons.ShieldAlert size={16} className="text-red-400 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-400 mb-1">User revoked — {revokeResult.username}</p>
+            <p className="text-xs text-zinc-400 mb-2">{revokeResult.message}</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-zinc-500">
+              <span><span className="text-zinc-400">Serial:</span> <span className="font-mono">{revokeResult.serial.slice(0, 16)}…</span></span>
+              <span><span className="text-zinc-400">Reason:</span> {revokeResult.reason}</span>
+            </div>
+          </div>
+          <button type="button" aria-label="Dismiss" onClick={() => setRevokeResult(null)} className="text-zinc-600 hover:text-zinc-400 shrink-0">
+            <Icons.X size={14} />
+          </button>
+        </div>
+      )}
 
       <Tabs
         tabs={[
@@ -248,6 +292,7 @@ export function PkiPage() {
           {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">{error}</div>}
           <div><label className="text-xs font-medium text-zinc-400 mb-1.5 block">Username</label><Input placeholder="newuser" className="w-full" value={enrollData.username} onChange={e => setEnrollData({...enrollData, username: e.target.value})} /></div>
           <div><label className="text-xs font-medium text-zinc-400 mb-1.5 block">Password</label><Input placeholder="••••••••" type="password" className="w-full" value={enrollData.password} onChange={e => setEnrollData({...enrollData, password: e.target.value})} /></div>
+          <div><label className="text-xs font-medium text-zinc-400 mb-1.5 block">Email <span className="text-zinc-600">(optional)</span></label><Input placeholder="user@example.com" type="email" className="w-full" value={enrollData.email} onChange={e => setEnrollData({...enrollData, email: e.target.value})} /></div>
           <div><label className="text-xs font-medium text-zinc-400 mb-1.5 block">Organization</label><Select options={['Org1', 'Org2']} className="w-full" value={enrollData.org} onChange={v => setEnrollData({...enrollData, org: v})} /></div>
           <div><label className="text-xs font-medium text-zinc-400 mb-1.5 block">Roles (comma-separated)</label><Input placeholder="EMPLOYEE, HR_MANAGER" className="w-full" value={enrollData.roles} onChange={e => setEnrollData({...enrollData, roles: e.target.value})} /></div>
           <div><label className="text-xs font-medium text-zinc-400 mb-1.5 block">Validity (days)</label><Input placeholder="365" type="number" className="w-full" value={enrollData.days} onChange={e => setEnrollData({...enrollData, days: e.target.value})} /></div>

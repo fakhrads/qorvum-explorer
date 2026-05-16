@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getConfig, setConfig, clearAuth } from '../lib/config';
+import { getConfig, clearAuth } from '../lib/config';
 import { Button } from './ui';
 import { AlertCircleIcon, ShieldAlertIcon, InfoIcon } from './icons';
-import { api, ApiError } from '../lib/api';
 
 interface ConnectionBannerProps {
   isDisconnected?: boolean;
@@ -14,34 +13,12 @@ export function ConnectionBanner({ isDisconnected, onRefresh, onLogout }: Connec
   const [expiryMinutes, setExpiryMinutes] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const [config, setConfigState] = useState(getConfig());
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefreshSession = async () => {
-    setRefreshing(true);
-    try {
-      const res = await api.refresh();
-      if (res.success) {
-        setConfig({
-          tokenExpiry: res.data.expires_at,
-          org: res.data.org,
-          roles: res.data.roles
-        });
-        setConfigState(getConfig());
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        onLogout?.();
-      }
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   useEffect(() => {
     const checkExpiry = () => {
       const currentConfig = getConfig();
       setConfigState(currentConfig);
-      
+
       if (!currentConfig.tokenExpiry) {
         setExpiryMinutes(null);
         setIsExpired(false);
@@ -61,7 +38,7 @@ export function ConnectionBanner({ isDisconnected, onRefresh, onLogout }: Connec
     };
 
     checkExpiry();
-    const timer = setInterval(checkExpiry, 30000); // Check every 30s
+    const timer = setInterval(checkExpiry, 30000);
     return () => clearInterval(timer);
   }, []);
 
@@ -69,9 +46,9 @@ export function ConnectionBanner({ isDisconnected, onRefresh, onLogout }: Connec
     return (
       <div className="bg-red-600 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2">
         <ShieldAlertIcon size={16} />
-        <span>Session expired — Login again to continue</span>
+        <span>Session expired — Sign in again to continue</span>
         <Button size="sm" variant="secondary" className="ml-4 h-7 bg-white text-red-600 border-none hover:bg-white/90" onClick={onLogout}>
-          Go to Login
+          Sign In
         </Button>
       </div>
     );
@@ -82,19 +59,21 @@ export function ConnectionBanner({ isDisconnected, onRefresh, onLogout }: Connec
       <div className="bg-red-500/10 border-b border-red-500/20 text-red-400 px-4 py-2 text-center text-xs font-medium flex items-center justify-center gap-2">
         <AlertCircleIcon size={14} />
         <span>⚠ Disconnected: Cannot reach gateway at {config.baseUrl}</span>
-        <button className="underline ml-2 hover:text-red-300" onClick={onRefresh}>Retry Connection</button>
+        <button type="button" className="underline ml-2 hover:text-red-300" onClick={onRefresh}>Retry Connection</button>
       </div>
     );
   }
 
+  // Backend /auth/refresh does not issue a new token — it requires re-authentication.
+  // When the session is near expiry, prompt the user to sign in again.
   if (expiryMinutes !== null && expiryMinutes < 10) {
     return (
-      <div className="bg-blue-600 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2">
+      <div className="bg-amber-600 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2">
         <InfoIcon size={16} />
-        <span>Session expires in {expiryMinutes} minutes — Refresh to stay logged in</span>
-        <Button size="sm" variant="secondary" className="ml-4 h-7 bg-white text-blue-600 border-none hover:bg-white/90" 
-          onClick={handleRefreshSession} disabled={refreshing}>
-          {refreshing ? 'Refreshing...' : 'Refresh Session'}
+        <span>Session expires in {expiryMinutes} min — sign in again to stay connected</span>
+        <Button size="sm" variant="secondary" className="ml-4 h-7 bg-white text-amber-600 border-none hover:bg-white/90"
+          onClick={onLogout}>
+          Re-login
         </Button>
       </div>
     );

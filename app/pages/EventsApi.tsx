@@ -18,8 +18,9 @@ const API_ENDPOINTS = [
   { method: 'GET',  path: '/api/v1/records/:collection/:partition/:id',   desc: 'Get a specific record by key',                auth: true  },
   { method: 'GET',  path: '/api/v1/history/:collection/:id',              desc: 'Get record version history',                  auth: true  },
   { method: 'GET',  path: '/api/v1/admin/users',                          desc: 'List enrolled users',                        auth: true  },
-  { method: 'POST', path: '/api/v1/admin/users/enroll',                   desc: 'Enroll a new user',                          auth: true,  body: '{\n  "username": "alice",\n  "password": "password123",\n  "org": "Org1",\n  "roles": ["EMPLOYEE"],\n  "days": 365\n}' },
+  { method: 'POST', path: '/api/v1/admin/users/enroll',                   desc: 'Enroll a new user',                          auth: true,  body: '{\n  "username": "alice",\n  "password": "password123",\n  "org": "Org1",\n  "email": "alice@example.com",\n  "roles": ["EMPLOYEE"],\n  "days": 365\n}' },
   { method: 'POST', path: '/api/v1/admin/users/:username/revoke',         desc: 'Revoke user access immediately',              auth: true,  body: '{\n  "reason": "Left organization"\n}' },
+  { method: 'GET',  path: '/api/v1/contracts',                            desc: 'List all deployed contracts and their functions', auth: true },
   { method: 'POST', path: '/api/v1/invoke/:contract/:function',           desc: 'Invoke contract function (writes to ledger)', auth: true, body: '{}' },
   { method: 'GET',  path: '/api/v1/query/:contract/:function',            desc: 'Query contract function (read-only)',         auth: true  },
 ];

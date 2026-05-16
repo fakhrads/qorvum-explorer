@@ -98,12 +98,10 @@ export interface ListResponse {
   data: LedgerRecord[];
 }
 
+// Backend returns only version + block_num per history entry (no full record data)
 export interface HistoryEntry {
-  tx_id: number[];
+  version: number;
   block_num: number;
-  timestamp: number;
-  value: LedgerRecord | null;
-  is_delete: boolean;
 }
 
 export interface InvokeResponse {
@@ -135,6 +133,33 @@ export interface EnrollRequest {
   roles: string[];
   org: string;
   days: number;
+  email?: string;
+}
+
+export interface EnrolledUser {
+  username: string;
+  org: string;
+  roles: string[];
+  cert_fingerprint: string;
+  expires_at: number;
+  message: string;
+}
+
+export interface RevokeResponse {
+  username: string;
+  serial: string;
+  reason: string;
+  message: string;
+}
+
+export interface StatsResponse {
+  success: boolean;
+  data: {
+    channel: string;
+    block_height: number | null;
+    mode: 'dev' | 'consensus';
+    version: string;
+  };
 }
 
 export class ApiError extends Error {
@@ -355,8 +380,8 @@ export const api = {
     return res.data.users;
   },
 
-  async enrollUser(data: EnrollRequest): Promise<User> {
-    const res = await request<{ success: boolean; data: User }>('/api/v1/admin/users/enroll', {
+  async enrollUser(data: EnrollRequest): Promise<EnrolledUser> {
+    const res = await request<{ success: boolean; data: EnrolledUser }>('/api/v1/admin/users/enroll', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -364,11 +389,16 @@ export const api = {
     return res.data;
   },
 
-  async revokeUser(username: string, reason: string): Promise<void> {
-    await request(`/api/v1/admin/users/${username}/revoke`, {
+  async revokeUser(username: string, reason: string): Promise<RevokeResponse> {
+    const res = await request<{ success: boolean; data: RevokeResponse }>(`/api/v1/admin/users/${username}/revoke`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason }),
     });
+    return res.data;
+  },
+
+  async getStats(): Promise<StatsResponse> {
+    return request<StatsResponse>('/api/v1/stats');
   },
 };

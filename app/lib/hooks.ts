@@ -3,7 +3,6 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getConfig, setConfig } from './config';
 import { api } from './api';
 import type { HealthResponse, Block, Transaction, LedgerRecord, User, Contract } from './api';
 import { useWsContext } from './ws-context';
@@ -59,29 +58,10 @@ function usePolling<T>(
 }
 
 // --- Token Refresh Hook ---
-
-export function useTokenRefresh() {
-  useEffect(() => {
-    const checkAndRefresh = async () => {
-      const config = getConfig();
-      if (!config.token || !config.tokenExpiry) return;
-      const now = Math.floor(Date.now() / 1000);
-      const diff = config.tokenExpiry - now;
-      if (diff > 0 && diff < 300) {
-        try {
-          const res = await api.refresh();
-          if (res.success) {
-            setConfig({ tokenExpiry: res.data.expires_at, org: res.data.org, roles: res.data.roles });
-          }
-        } catch (err) {
-          console.error('Failed to refresh token', err);
-        }
-      }
-    };
-    const interval = setInterval(checkAndRefresh, 60000);
-    return () => clearInterval(interval);
-  }, []);
-}
+// Backend's /auth/refresh does not issue a new token — it returns cert info and
+// advises re-authentication. This hook is intentionally a no-op; expiry warnings
+// are handled by ConnectionBanner which prompts the user to re-login.
+export function useTokenRefresh() {}
 
 // --- Specific Hooks ---
 
