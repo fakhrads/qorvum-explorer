@@ -1,36 +1,144 @@
 @import "tailwindcss";
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
+
+/*
+ * Dark mode palette — TN/IPS compatible
+ *
+ * Elevation ladder (each step ~5-8% luminance, per Material Design):
+ *   bg       #111114  →  L≈0.3%   workspace floor
+ *   surface  #19191e  →  L≈0.9%   cards / panels      (+0.6 Δ)
+ *   raised   #232329  →  L≈1.8%   hover / nested      (+0.9 Δ)
+ *   border   #3c3c45  →  L≈5.0%   dividers / strokes  (+3.2 Δ, ~1.9:1 vs surface)
+ *   border-s #2c2c33  →  L≈2.8%   subtle row lines    (+1.9 Δ)
+ *
+ * Why the big jump to --border?
+ *   TN panels have ~600:1 native contrast; anything below ~4% luminance
+ *   collapses into black. A border at ≥3.5% luminance stays visible on
+ *   both TN and IPS without looking harsh.
+ *
+ * Text ladder follows WCAG AA / AAA:
+ *   --text   #e6e6ea  →  contrast ~15.5:1 on bg  (AAA ✓)
+ *   --text-2 #9898a6  →  contrast ~6.8:1  on bg  (AA ✓)
+ *   --text-3 #636370  →  contrast ~3.5:1  on bg  (AA for UI ✓)
+ */
+:root {
+  --bg: #111114;
+  --surface: #19191e;
+  --raised: #232329;
+  --border: #3c3c45;
+  --border-subtle: #2c2c33;
+  --text: #e6e6ea;
+  --text-2: #9898a6;
+  --text-3: #636370;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-bg: rgba(59,130,246,0.10);
+  --accent-light: rgba(59,130,246,0.15);
+  --code-bg: #141418;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  --panel-bg: rgba(14,14,17,0.97);
+  --panel-border: rgba(60,60,69,0.65);
+  --panel-shadow: 0 8px 48px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35);
+  --bg-gradient: radial-gradient(ellipse at 20% 10%, #181820 0%, #111114 55%, #0e0e12 100%);
+  --sidebar-w: 250px;
+}
+
+html.light {
+  --bg: #f8f8f9;
+  --surface: #ffffff;
+  --raised: #f4f4f5;
+  --border: #e4e4e7;
+  --border-subtle: #eeeef0;
+  --text: #09090b;
+  --text-2: #3f3f46;
+  --text-3: #71717a;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-bg: rgba(37,99,235,0.06);
+  --accent-light: rgba(37,99,235,0.10);
+  --code-bg: #f4f4f5;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --panel-bg: rgba(255,255,255,0.97);
+  --panel-border: rgba(228,228,231,0.8);
+  --panel-shadow: 0 4px 32px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --bg-gradient: linear-gradient(145deg, #f5f5f7 0%, #f8f9fc 50%, #f3f4f8 100%);
+}
 
 html, body {
   margin: 0; padding: 0;
-  background-color: #09090b;
-  color: #e4e4e7;
-  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── Workspace wrapper ───────────────────────────────────────────────────── */
+.qv-workspace {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Glass panel ─────────────────────────────────────────────────────────── */
+/*
+ * Inner highlight: inset 0 1px 0 rgba(255,255,255,0.05)
+ * Teknik yang dipakai Vercel, Linear, GitHub — menambahkan "rim light"
+ * tipis di tepi atas panel sehingga terasa terangkat dari background,
+ * bekerja bahkan di TN panel yang menggelapkan border konvensional.
+ */
+.qv-panel {
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  backdrop-filter: blur(40px) saturate(160%);
+  border-radius: 16px;
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+  overflow: hidden;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+html.light .qv-panel {
+  box-shadow: var(--panel-shadow), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #52525b; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
-::selection { background-color: rgba(16,185,129,0.2); }
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes slide-up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fade-in { from{opacity:0} to{opacity:1} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-*:focus-visible { outline: 2px solid rgba(16,185,129,0.5); outline-offset: 2px; }
+.animate-slide-up { animation: slide-up .25s ease-out forwards; }
+.animate-fade-in  { animation: fade-in .2s ease-out forwards; }
+.dot-pulse        { animation: pulse-dot 1.5s ease-in-out infinite; }
+.spin             { animation: spin 1s linear infinite; }
 
+/* ── Focus ───────────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid rgba(59,130,246,0.5);
+  outline-offset: 2px;
+}
+
+::selection { background: rgba(59,130,246,0.2); }
+
+/* ── Code editor ─────────────────────────────────────────────────────────── */
 .code-editor-textarea { tab-size: 4; }
 
+/* ── Tailwind theme ──────────────────────────────────────────────────────── */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }

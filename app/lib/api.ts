@@ -124,7 +124,7 @@ export interface User {
   org: string;
   roles: string[];
   expires_at: number;
-  status: 'VALID' | 'EXPIRED';
+  status: 'VALID' | 'EXPIRED' | 'REVOKED';
 }
 
 export interface EnrollRequest {
@@ -150,6 +150,41 @@ export interface RevokeResponse {
   serial: string;
   reason: string;
   message: string;
+}
+
+export interface Certificate {
+  serial: string;
+  subject: string;
+  org: string;
+  org_unit: string | null;
+  email: string | null;
+  issuer: string;
+  cert_type: 'User' | 'Node' | 'CA';
+  algorithm: string;
+  roles: string[];
+  not_before: number;
+  not_after: number;
+  fingerprint: string;
+  status: 'VALID' | 'EXPIRED' | 'REVOKED';
+  revoke_reason: string | null;
+}
+
+export interface CaInfo {
+  name: string;
+  org: string;
+  serial: string;
+  algorithm: string;
+  not_before: number;
+  not_after: number;
+  fingerprint: string;
+}
+
+export interface CertsResponse {
+  certs: Certificate[];
+  crl: Record<string, string>;
+  ca: CaInfo;       // first/local CA (backwards compat)
+  cas: CaInfo[];    // all trusted CAs (federation)
+  total: number;
 }
 
 export interface StatsResponse {
@@ -386,6 +421,11 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    return res.data;
+  },
+
+  async listCertificates(): Promise<CertsResponse> {
+    const res = await request<{ success: boolean; data: CertsResponse }>('/api/v1/admin/certs');
     return res.data;
   },
 

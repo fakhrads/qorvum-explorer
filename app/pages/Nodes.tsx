@@ -49,23 +49,23 @@ export function NodesPage() {
   ] : [];
 
   const roleIcon = (role: string) => {
-    if (role === 'validator') return <Icons.ShieldCheck size={18} className="text-emerald-400" />;
+    if (role === 'validator') return <Icons.ShieldCheck size={18} className="text-[var(--accent)]" />;
     if (role === 'gateway') return <Icons.Globe size={18} className="text-blue-400" />;
     return <Icons.Network size={18} className="text-amber-400" />;
   };
 
   const roleBg = (role: string) => {
-    if (role === 'validator') return 'bg-emerald-500/10 border-emerald-500/20';
+    if (role === 'validator') return 'bg-[var(--accent-bg)] border-[var(--accent)]/20';
     if (role === 'gateway') return 'bg-blue-500/10 border-blue-500/20';
     return 'bg-amber-500/10 border-amber-500/20';
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-slide-up">
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Node Monitor</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">Network node health and status overview</p>
+          <h1 className="text-xl font-bold text-[var(--text)]">Node Monitor</h1>
+          <p className="text-sm text-[var(--text-3)] mt-0.5">Network node health and status overview</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="success" dot>Live Network</Badge>
@@ -79,16 +79,16 @@ export function NodesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {nodes.map(node => (
               <Card key={node.id} hover onClick={() => setSelected(selected?.id === node.id ? null : node)}
-                className={`transition-all ${selected?.id === node.id ? 'border-emerald-500/40 bg-zinc-900' : ''}`}>
+                className={`transition-all ${selected?.id === node.id ? 'border-[var(--accent)]/40' : ''}`}>
                 <CardBody>
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg border flex items-center justify-center ${roleBg(node.role)}`}>
+                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${roleBg(node.role)}`}>
                         {roleIcon(node.role)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-zinc-100">{node.name}</p>
-                        <p className="text-[11px] text-zinc-500 font-mono">{node.ip}</p>
+                        <p className="text-sm font-bold text-[var(--text)]">{node.name}</p>
+                        <p className="text-[11px] text-[var(--text-3)] font-mono truncate max-w-32">{node.ip}</p>
                       </div>
                     </div>
                     <Badge variant={node.status === 'online' ? 'success' : node.status === 'syncing' ? 'warning' : 'danger'} dot>
@@ -98,22 +98,22 @@ export function NodesPage() {
 
                   <div className="grid grid-cols-3 gap-3 mb-4">
                     {[
-                      { label: 'CPU', val: node.cpu, unit: '%', color: node.cpu > 70 ? 'bg-red-400' : 'bg-emerald-500' },
+                      { label: 'CPU', val: node.cpu, unit: '%', color: node.cpu > 70 ? 'bg-red-400' : 'bg-[var(--accent)]' },
                       { label: 'Memory', val: node.mem, unit: '%', color: node.mem > 70 ? 'bg-red-400' : 'bg-blue-500' },
                       { label: 'Latency', val: node.latency, unit: 'ms', color: node.latency > 30 ? 'bg-amber-400' : 'bg-emerald-500' },
                     ].map(({ label, val, unit, color }) => (
                       <div key={label}>
-                        <p className="text-[10px] text-zinc-500 mb-1">{label}</p>
-                        <p className="text-xs font-bold text-zinc-200 mb-1.5">{val}{unit}</p>
+                        <p className="text-[10px] text-[var(--text-3)] mb-1">{label}</p>
+                        <p className="text-xs font-bold text-[var(--text-2)] mb-1.5">{val}{unit}</p>
                         <Progress value={unit === 'ms' ? (val / 100) * 100 : val} color={color} />
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-zinc-600 pt-2.5 border-t border-zinc-800">
-                    <span>Block: <span className="text-zinc-400 font-mono">#{node.blocks}</span></span>
-                    <span>Peers: <span className="text-zinc-400">{node.peers}</span></span>
-                    <span>Up: <span className="text-zinc-400">{node.uptime}</span></span>
+                  <div className="flex items-center justify-between text-[11px] text-[var(--text-3)] pt-2.5 border-t border-[var(--border)]/50">
+                    <span>Block: <span className="text-[var(--accent)] font-mono">#{node.blocks}</span></span>
+                    <span>Peers: <span className="text-[var(--text-2)]">{node.peers}</span></span>
+                    <span>Up: <span className="text-[var(--text-2)]">{node.uptime}</span></span>
                   </div>
                 </CardBody>
               </Card>
@@ -123,7 +123,7 @@ export function NodesPage() {
           {/* Network Topology SVG */}
           <Card>
             <CardHeader>
-              <Icons.Network size={15} className="text-emerald-400" />
+              <Icons.Network size={15} className="text-[var(--accent)]" />
               <span className="text-sm font-semibold">Network Topology</span>
             </CardHeader>
             <CardBody>
@@ -137,7 +137,7 @@ export function NodesPage() {
                       const cy = 120 + 80 * Math.sin(a);
                       return (
                         <line key={node.id} x1={250} y1={120} x2={cx} y2={cy}
-                          stroke={node.status === 'online' ? '#10b981' : '#f59e0b'}
+                          stroke={node.status === 'online' ? '#3b82f6' : '#f59e0b'}
                           strokeWidth="1.5"
                           strokeDasharray={node.status === 'syncing' ? '6 4' : 'none'}
                           opacity="0.25" />
@@ -147,9 +147,9 @@ export function NodesPage() {
 
                   {/* Center hub */}
                   <div className="absolute" style={{ left: 250 - 28, top: 120 - 28 }}>
-                    <div className="w-14 h-14 rounded-full bg-emerald-500/15 border-2 border-emerald-500/30 flex flex-col items-center justify-center z-10">
-                      <span className="text-[9px] font-bold text-emerald-400">P2P</span>
-                      <span className="text-[8px] text-zinc-500">gossipsub</span>
+                    <div className="w-14 h-14 rounded-full bg-[var(--accent-bg)] border-2 border-[var(--accent)]/30 flex flex-col items-center justify-center z-10">
+                      <span className="text-[9px] font-bold text-[var(--accent)]">P2P</span>
+                      <span className="text-[8px] text-[var(--text-3)]">gossipsub</span>
                     </div>
                   </div>
 
@@ -158,13 +158,13 @@ export function NodesPage() {
                     const a = (angles[i] * Math.PI) / 180;
                     const cx = 250 + 170 * Math.cos(a) - 20;
                     const cy = 120 + 80 * Math.sin(a) - 20;
-                    const colors: Record<string, string> = { online: 'bg-emerald-600', syncing: 'bg-amber-500', offline: 'bg-red-500' };
+                    const colors: Record<string, string> = { online: 'bg-blue-600', syncing: 'bg-amber-500', offline: 'bg-red-500' };
                     return (
                       <div key={node.id} className="absolute flex flex-col items-center gap-1" style={{ left: cx, top: cy }}>
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-[11px] font-bold shadow-lg ${colors[node.status] ?? 'bg-zinc-600'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-[11px] font-bold shadow-lg ${colors[node.status] ?? 'bg-[var(--raised)]'}`}>
                           {node.role[0].toUpperCase()}
                         </div>
-                        <span className="text-[9px] text-zinc-500 font-mono whitespace-nowrap bg-zinc-950 px-1 rounded">
+                        <span className="text-[9px] text-[var(--text-3)] font-mono whitespace-nowrap bg-[var(--surface)] px-1 rounded">
                           {node.name.replace('node-', '')}
                         </span>
                       </div>
@@ -177,7 +177,7 @@ export function NodesPage() {
         </>
       ) : (
         <Card>
-          <CardBody className="flex flex-col items-center justify-center py-12 text-zinc-500">
+          <CardBody className="flex flex-col items-center justify-center py-12 text-[var(--text-3)]">
             <Icons.Network size={40} className="mb-4 opacity-20" />
             <p>No active nodes detected in the network.</p>
             <p className="text-xs mt-1">Node monitoring API is not yet available in this environment.</p>
@@ -189,7 +189,7 @@ export function NodesPage() {
       {selected && (
         <Card>
           <CardHeader action={
-            <button type="button" aria-label="Close" onClick={() => setSelected(null)} className="text-zinc-500 hover:text-zinc-300">
+            <button type="button" aria-label="Close" onClick={() => setSelected(null)} className="text-[var(--text-3)] hover:text-[var(--text)]">
               <Icons.X size={15} />
             </button>
           }>
@@ -203,15 +203,15 @@ export function NodesPage() {
                 ['Organization', <Badge variant="info">{selected.org}</Badge>],
                 ['Version', selected.version],
                 ['Uptime', selected.uptime],
-                ['IP / Address', <span className="font-mono text-xs text-zinc-300">{selected.ip}</span>],
+                ['IP / Address', <span className="font-mono text-xs text-[var(--text-2)]">{selected.ip}</span>],
                 ['Latest Block', `#${selected.blocks}`],
                 ['Connected Peers', selected.peers],
                 ['Latency', `${selected.latency}ms`],
-                ...(selected.peer_id ? [['Peer ID', <span className="font-mono text-[10px] text-zinc-400 break-all">{selected.peer_id}</span>]] : []),
+                ...(selected.peer_id ? [['Peer ID', <span className="font-mono text-[10px] text-[var(--text-3)] break-all">{selected.peer_id}</span>]] : []),
               ].map(([k, v], i) => (
-                <div key={i} className="p-3 rounded-xl bg-zinc-900 border border-zinc-800">
-                  <p className="text-[10px] text-zinc-500 mb-1.5">{k}</p>
-                  <div className="text-sm font-medium text-zinc-200">{v as React.ReactNode}</div>
+                <div key={i} className="p-3 rounded-xl bg-[var(--raised)] border border-[var(--border)]">
+                  <p className="text-[10px] text-[var(--text-3)] mb-1.5">{k}</p>
+                  <div className="text-sm font-medium text-[var(--text-2)]">{v as React.ReactNode}</div>
                 </div>
               ))}
             </div>

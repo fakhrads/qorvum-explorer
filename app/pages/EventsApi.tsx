@@ -37,10 +37,10 @@ export function EventsPage() {
 
   const getEventIcon = (type: RealtimeEvent['type']) => {
     switch (type) {
-      case 'block': return <Icons.Cube size={14} className="text-emerald-400" />;
+      case 'block': return <Icons.Cube size={14} className="text-[var(--accent)]" />;
       case 'tx': return <Icons.Zap size={14} className="text-blue-400" />;
-      case 'node_status': return <Icons.Server size={14} className="text-violet-400" />;
-      default: return <Icons.Activity size={14} className="text-zinc-400" />;
+      case 'node_status': return <Icons.Server size={14} className="text-zinc-400" />;
+      default: return <Icons.Activity size={14} className="text-[var(--text-3)]" />;
     }
   };
 
@@ -54,17 +54,23 @@ export function EventsPage() {
     }
   };
 
+  const eventAccent: Record<string, string> = {
+    block: 'border-l-[var(--accent)]',
+    tx: 'border-l-blue-500',
+    node_status: 'border-l-zinc-500',
+  };
+
   return (
-    <div>
+    <div className="animate-slide-up">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Event Log</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">Live system events pushed via WebSocket (WS)</p>
+          <h1 className="text-xl font-bold text-[var(--text)]">Event Log</h1>
+          <p className="text-sm text-[var(--text-3)] mt-0.5">Live system events pushed via WebSocket (WS)</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800">
-            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-            <span className="text-[11px] font-medium text-zinc-400">
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${connected ? 'bg-emerald-500/8 border-emerald-500/20' : 'bg-red-500/8 border-red-500/20'}`}>
+            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 dot-pulse' : 'bg-red-500'}`} />
+            <span className={`text-[11px] font-medium ${connected ? 'text-emerald-400' : 'text-red-400'}`}>
               {connected ? 'Connected' : 'Reconnecting...'}
             </span>
           </div>
@@ -75,31 +81,31 @@ export function EventsPage() {
       {filteredEvents.length > 0 ? (
         <div className="space-y-3">
           {filteredEvents.map((e, i) => (
-            <Card key={i} className="border-l-2 border-l-zinc-800 hover:border-l-emerald-500/50 transition-colors">
+            <Card key={i} className={`border-l-2 ${eventAccent[e.type] ?? 'border-l-[var(--border)]'} transition-colors`}>
               <CardBody className="py-3 px-4">
                 <div className="flex items-start gap-3">
-                  <div className="mt-1">{getEventIcon(e.type)}</div>
+                  <div className="mt-1 shrink-0">{getEventIcon(e.type)}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-zinc-200">{getEventTitle(e)}</span>
-                      <span className="text-[10px] text-zinc-600 font-mono">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-bold text-[var(--text)]">{getEventTitle(e)}</span>
+                      <span className="text-[10px] text-[var(--text-3)] font-mono shrink-0 ml-2">
                         {new Date().toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className="text-xs text-zinc-500 font-mono bg-zinc-950/50 p-2 rounded border border-zinc-900 overflow-x-auto">
+                    <div className="text-xs text-[var(--text-3)] font-mono bg-[var(--code-bg)] p-2.5 rounded-xl border border-[var(--border)] overflow-x-auto">
                       {e.type === 'tx' ? (
                         <div className="space-y-1">
                           <div className="flex gap-2">
-                            <span className="text-zinc-600">ID:</span>
+                            <span className="text-[var(--text-3)]">ID:</span>
                             <span className="text-blue-400">{e.data.tx_id}</span>
                           </div>
                           <div className="flex gap-2">
-                            <span className="text-zinc-600">Caller:</span>
-                            <span>{e.data.caller}</span>
+                            <span className="text-[var(--text-3)]">Caller:</span>
+                            <span className="text-[var(--text-2)]">{e.data.caller}</span>
                           </div>
                           <div className="flex gap-2">
-                            <span className="text-zinc-600">Contract:</span>
-                            <span className="text-emerald-400">{e.data.contract_id}</span>
+                            <span className="text-[var(--text-3)]">Contract:</span>
+                            <span className="text-[var(--accent)]">{e.data.contract_id}</span>
                           </div>
                         </div>
                       ) : (
@@ -114,10 +120,10 @@ export function EventsPage() {
         </div>
       ) : (
         <Card>
-          <div className="flex flex-col items-center justify-center py-24 text-zinc-600">
-             <Icons.Activity size={32} className="mb-3 opacity-20" />
-             <p className="text-sm">No events matching your search.</p>
-             <p className="text-[10px] mt-1 italic">Waiting for incoming events from {connected ? 'gateway' : 'reconnection'}...</p>
+          <div className="flex flex-col items-center justify-center py-24 text-[var(--text-3)]">
+            <Icons.Activity size={32} className="mb-3 opacity-20" />
+            <p className="text-sm">No events matching your search.</p>
+            <p className="text-[10px] mt-1 italic">Waiting for incoming events from {connected ? 'gateway' : 'reconnection'}...</p>
           </div>
         </Card>
       )}
@@ -150,7 +156,7 @@ export function ApiPage() {
     if (!selected) return;
     setLoading(true);
     setResponse(null);
-    
+
     const start = performance.now();
     try {
       const path = selected.path
@@ -162,9 +168,7 @@ export function ApiPage() {
         .replace(':number', '1')
         .replace(':username', 'alice');
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const res = await fetch(`${baseUrl}${path}`, {
@@ -175,13 +179,8 @@ export function ApiPage() {
 
       const data = await res.json().catch(() => ({ message: 'Failed to parse JSON' }));
       const duration = (performance.now() - start).toFixed(0);
-      
-      setResponse({
-        status: res.status,
-        statusText: res.statusText,
-        duration: `${duration}ms`,
-        data,
-      });
+
+      setResponse({ status: res.status, statusText: res.statusText, duration: `${duration}ms`, data });
     } catch (err: any) {
       const duration = (performance.now() - start).toFixed(0);
       setResponse({
@@ -204,11 +203,11 @@ export function ApiPage() {
   };
 
   return (
-    <div>
+    <div className="animate-slide-up">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">API Playground</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">Explore and test Qorvum REST API endpoints</p>
+          <h1 className="text-xl font-bold text-[var(--text)]">API Playground</h1>
+          <p className="text-sm text-[var(--text-3)] mt-0.5">Explore and test Qorvum REST API endpoints</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="success" dot>REST API</Badge>
@@ -219,11 +218,11 @@ export function ApiPage() {
       <Card className="mb-4">
         <CardBody className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 flex-1 min-w-48">
-            <span className="text-xs text-zinc-500 shrink-0">Base URL</span>
+            <span className="text-xs text-[var(--text-3)] shrink-0">Base URL</span>
             <Input value={baseUrl} onChange={e => setBaseUrl(e.target.value)} className="flex-1 text-xs font-mono" />
           </div>
           <div className="flex items-center gap-2 flex-1 min-w-64">
-            <span className="text-xs text-zinc-500 shrink-0 flex items-center gap-1"><Icons.Key size={11} /> Bearer</span>
+            <span className="text-xs text-[var(--text-3)] shrink-0 flex items-center gap-1"><Icons.Key size={11} /> Bearer</span>
             <Input value={token} onChange={e => setToken(e.target.value)} placeholder="Paste token..." className="flex-1 text-xs font-mono" />
           </div>
         </CardBody>
@@ -233,22 +232,22 @@ export function ApiPage() {
         {/* Endpoint list */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <Icons.Layers size={14} className="text-emerald-400" />
+            <Icons.Layers size={14} className="text-[var(--accent)]" />
             <span className="text-sm font-semibold">Endpoints</span>
-            <span className="text-xs text-zinc-500 font-mono">({API_ENDPOINTS.length})</span>
+            <span className="text-xs text-[var(--text-3)] font-mono">({API_ENDPOINTS.length})</span>
           </CardHeader>
-          <div className="divide-y divide-zinc-800/50">
+          <div className="divide-y divide-[var(--border)]/50">
             {API_ENDPOINTS.map((ep, i) => (
               <button type="button" key={i} onClick={() => { setSelected(ep); setBody(ep.body ?? ''); setResponse(null); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${selected === ep ? 'bg-zinc-800' : 'hover:bg-zinc-800/40'}`}>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border font-mono shrink-0 ${methodColor[ep.method] ?? 'text-zinc-400 bg-zinc-800 border-zinc-700'}`}>
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${selected === ep ? 'bg-[var(--raised)]' : 'hover:bg-[var(--raised)]/40'}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border font-mono shrink-0 ${methodColor[ep.method] ?? 'text-[var(--text-3)] bg-[var(--raised)] border-[var(--border)]'}`}>
                   {ep.method}
                 </span>
                 <div className="min-w-0">
-                  <div className="text-xs font-mono text-zinc-300 truncate">{ep.path}</div>
-                  <div className="text-[10px] text-zinc-500 truncate">{ep.desc}</div>
+                  <div className="text-xs font-mono text-[var(--text-2)] truncate">{ep.path}</div>
+                  <div className="text-[10px] text-[var(--text-3)] truncate">{ep.desc}</div>
                 </div>
-                {ep.auth && <Icons.Key size={10} className="text-zinc-600 shrink-0" />}
+                {ep.auth && <Icons.Key size={10} className="text-[var(--text-3)] shrink-0" />}
               </button>
             ))}
           </div>
@@ -260,12 +259,12 @@ export function ApiPage() {
             <>
               <Card>
                 <CardHeader>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded border font-mono shrink-0 ${methodColor[selected.method] ?? ''}`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border font-mono shrink-0 ${methodColor[selected.method] ?? ''}`}>
                     {selected.method}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-mono text-zinc-300 truncate">{selected.path}</div>
-                    <div className="text-[10px] font-mono text-zinc-600 truncate mt-0.5">
+                    <div className="text-sm font-mono text-[var(--text-2)] truncate">{selected.path}</div>
+                    <div className="text-[10px] font-mono text-[var(--text-3)] truncate mt-0.5">
                       {baseUrl}{selected.path
                         .replace(':contract', 'hr-service')
                         .replace(':function', 'get_employee')
@@ -281,7 +280,7 @@ export function ApiPage() {
                 <CardBody>
                   {selected.body && (
                     <div className="mb-4">
-                      <p className="text-xs font-semibold text-zinc-500 mb-2">Request Body</p>
+                      <p className="text-xs font-semibold text-[var(--text-3)] mb-2">Request Body</p>
                       <textarea
                         aria-label="Request body"
                         value={body}
@@ -289,7 +288,7 @@ export function ApiPage() {
                         rows={8}
                         spellCheck={false}
                         placeholder="Enter JSON body..."
-                        className="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 font-mono text-xs p-3 rounded-lg focus:outline-none focus:border-zinc-600 resize-none"
+                        className="w-full bg-[var(--code-bg)] border border-[var(--border)] text-[var(--text-2)] font-mono text-xs p-3 rounded-xl focus:outline-none focus:border-[var(--accent)]/40 focus:ring-2 focus:ring-[var(--accent)]/10 resize-none transition-all"
                       />
                     </div>
                   )}
@@ -304,12 +303,12 @@ export function ApiPage() {
                 <Card>
                   <CardHeader action={
                     response ? (
-                      <button type="button" onClick={copyResponse} className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
+                      <button type="button" onClick={copyResponse} className="flex items-center gap-1 text-xs text-[var(--text-3)] hover:text-[var(--text)]">
                         <Icons.Copy size={12} />{copied ? 'Copied!' : 'Copy'}
                       </button>
                     ) : undefined
                   }>
-                    <Icons.Terminal size={14} className="text-emerald-400" />
+                    <Icons.Terminal size={14} className="text-[var(--accent)]" />
                     <span className="text-sm font-semibold">Response</span>
                     {response && (
                       <div className="flex gap-2">
@@ -322,12 +321,12 @@ export function ApiPage() {
                   </CardHeader>
                   <div className="p-4">
                     {loading ? (
-                      <div className="flex items-center gap-2 text-zinc-500 text-sm py-4 justify-center">
-                        <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="flex items-center gap-2 text-[var(--text-3)] text-sm py-4 justify-center">
+                        <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full spin" />
                         Waiting for response...
                       </div>
                     ) : (
-                      <pre className="text-xs text-zinc-300 font-mono overflow-x-auto bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+                      <pre className="text-xs text-[var(--text-2)] font-mono overflow-x-auto bg-[var(--code-bg)] p-4 rounded-xl border border-[var(--border)]">
                         {JSON.stringify(response.data || response, null, 2)}
                       </pre>
                     )}
@@ -338,9 +337,11 @@ export function ApiPage() {
           ) : (
             <Card>
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Icons.Terminal size={32} className="text-zinc-700 mb-3" />
-                <p className="text-sm font-medium text-zinc-500">Select an endpoint</p>
-                <p className="text-xs text-zinc-600 mt-1">Click an endpoint from the left panel to get started</p>
+                <div className="w-14 h-14 rounded-2xl bg-[var(--raised)] border border-[var(--border)] flex items-center justify-center mb-4">
+                  <Icons.Terminal size={24} className="text-[var(--text-3)]" />
+                </div>
+                <p className="text-sm font-medium text-[var(--text-2)]">Select an endpoint</p>
+                <p className="text-xs text-[var(--text-3)] mt-1">Click an endpoint from the left panel to get started</p>
               </div>
             </Card>
           )}

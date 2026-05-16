@@ -6,12 +6,14 @@ import { ContractsPage } from '../pages/Contracts';
 import { PkiPage } from '../pages/Pki';
 import { NodesPage } from '../pages/Nodes';
 import { EventsPage, ApiPage } from '../pages/EventsApi';
+import { AdminToolsPage } from '../pages/AdminTools';
+import { DevToolsPage } from '../pages/DevTools';
 import { LoginPage } from '../pages/Login';
 import { isAuthenticated, clearAuth } from '../lib/config';
 import { useTokenRefresh } from '../lib/hooks';
 import { WsProvider } from '../lib/ws-context';
 
-type Page = 'dashboard' | 'explorer' | 'contracts' | 'pki' | 'nodes' | 'events' | 'api';
+type Page = 'dashboard' | 'explorer' | 'contracts' | 'pki' | 'nodes' | 'events' | 'api' | 'admin' | 'devtools';
 
 export default function Home() {
   useTokenRefresh();
@@ -50,6 +52,8 @@ export default function Home() {
       case 'nodes': return <NodesPage />;
       case 'events': return <EventsPage />;
       case 'api': return <ApiPage />;
+      case 'admin': return <AdminToolsPage />;
+      case 'devtools': return <DevToolsPage />;
       default: return <DashboardPage setPage={(p: string) => setPage(p as Page)} />;
     }
   };
