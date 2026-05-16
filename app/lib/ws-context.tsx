@@ -18,7 +18,7 @@ export interface PeerInfo {
 
 export interface WsState {
   latestBlock: { block_num: number; tx_count: number; timestamp: number } | null;
-  latestTx: { tx_id: string; block_num: number; chaincode_id: string; function_name: string; caller: string; success: boolean } | null;
+  latestTx: { tx_id: string; block_num: number; contract_id: string; function_name: string; caller: string; success: boolean } | null;
   nodeStatus: { status: string; peer_count: number; latest_block: number | null; mode: string; peers: PeerInfo[] } | null;
   connected: boolean;
   events: RealtimeEvent[];

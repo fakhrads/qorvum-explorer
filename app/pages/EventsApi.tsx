@@ -20,8 +20,8 @@ const API_ENDPOINTS = [
   { method: 'GET',  path: '/api/v1/admin/users',                          desc: 'List enrolled users',                        auth: true  },
   { method: 'POST', path: '/api/v1/admin/users/enroll',                   desc: 'Enroll a new user',                          auth: true,  body: '{\n  "username": "alice",\n  "password": "password123",\n  "org": "Org1",\n  "roles": ["EMPLOYEE"],\n  "days": 365\n}' },
   { method: 'POST', path: '/api/v1/admin/users/:username/revoke',         desc: 'Revoke user access immediately',              auth: true,  body: '{\n  "reason": "Left organization"\n}' },
-  { method: 'POST', path: '/api/v1/invoke/:chaincode/:function',          desc: 'Invoke chaincode function (writes to ledger)', auth: true, body: '{}' },
-  { method: 'GET',  path: '/api/v1/query/:chaincode/:function',           desc: 'Query chaincode function (read-only)',        auth: true  },
+  { method: 'POST', path: '/api/v1/invoke/:contract/:function',           desc: 'Invoke contract function (writes to ledger)', auth: true, body: '{}' },
+  { method: 'GET',  path: '/api/v1/query/:contract/:function',            desc: 'Query contract function (read-only)',         auth: true  },
 ];
 
 export function EventsPage() {
@@ -97,8 +97,8 @@ export function EventsPage() {
                             <span>{e.data.caller}</span>
                           </div>
                           <div className="flex gap-2">
-                            <span className="text-zinc-600">Chaincode:</span>
-                            <span className="text-emerald-400">{e.data.chaincode_id}</span>
+                            <span className="text-zinc-600">Contract:</span>
+                            <span className="text-emerald-400">{e.data.contract_id}</span>
                           </div>
                         </div>
                       ) : (
@@ -153,7 +153,7 @@ export function ApiPage() {
     const start = performance.now();
     try {
       const path = selected.path
-        .replace(':chaincode', 'hr-service')
+        .replace(':contract', 'hr-service')
         .replace(':function', 'get_employee')
         .replace(':collection', 'employees')
         .replace(':partition', 'IT')
@@ -266,7 +266,7 @@ export function ApiPage() {
                     <div className="text-sm font-mono text-zinc-300 truncate">{selected.path}</div>
                     <div className="text-[10px] font-mono text-zinc-600 truncate mt-0.5">
                       {baseUrl}{selected.path
-                        .replace(':chaincode', 'hr-service')
+                        .replace(':contract', 'hr-service')
                         .replace(':function', 'get_employee')
                         .replace(':collection', 'employees')
                         .replace(':partition', 'IT')

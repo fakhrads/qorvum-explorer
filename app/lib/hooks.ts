@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getConfig, setConfig } from './config';
 import { api } from './api';
-import type { HealthResponse, Block, Transaction, LedgerRecord, User, Chaincode } from './api';
+import type { HealthResponse, Block, Transaction, LedgerRecord, User, Contract } from './api';
 import { useWsContext } from './ws-context';
 export type { RealtimeEvent } from './ws-context';
 
@@ -208,8 +208,8 @@ export function useUsers() {
   return usePolling(() => api.listUsers(), 60000);
 }
 
-export function useChaincodes(intervalMs = 60000) {
-  return usePolling<Chaincode[]>(() => api.listChaincodes(), intervalMs);
+export function useContracts(intervalMs = 60000) {
+  return usePolling<Contract[]>(() => api.listContracts(), intervalMs);
 }
 
 // Backwards-compat re-exports

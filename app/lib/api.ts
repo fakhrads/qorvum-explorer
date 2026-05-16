@@ -115,7 +115,7 @@ export interface InvokeResponse {
   };
 }
 
-export interface Chaincode {
+export interface Contract {
   id: string;
   kind: 'native' | 'wasm';
   functions: string[];
@@ -326,26 +326,26 @@ export const api = {
     return res.data.history;
   },
 
-  // Chaincode
-  async invoke(chaincode: string, fn: string, args: object): Promise<InvokeResponse> {
-    return request<InvokeResponse>(`/api/v1/invoke/${chaincode}/${fn}`, {
+  // Contract
+  async invoke(contract: string, fn: string, args: object): Promise<InvokeResponse> {
+    return request<InvokeResponse>(`/api/v1/invoke/${contract}/${fn}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(args),
     });
   },
 
-  async query(chaincode: string, fn: string, args?: object): Promise<unknown> {
+  async query(contract: string, fn: string, args?: object): Promise<unknown> {
     const query = args ? `?args=${encodeURIComponent(JSON.stringify(args))}` : '';
     const res = await request<{ success: boolean; data: unknown }>(
-      `/api/v1/query/${chaincode}/${fn}${query}`
+      `/api/v1/query/${contract}/${fn}${query}`
     );
     return res.data;
   },
 
-  // Chaincodes
-  async listChaincodes(): Promise<Chaincode[]> {
-    const res = await request<{ success: boolean; data: { contracts: Chaincode[]; total: number } }>('/api/v1/contracts');
+  // Contracts
+  async listContracts(): Promise<Contract[]> {
+    const res = await request<{ success: boolean; data: { contracts: Contract[]; total: number } }>('/api/v1/contracts');
     return res.data.contracts;
   },
 

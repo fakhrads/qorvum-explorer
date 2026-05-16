@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardBody, Badge, Tabs, Button, Input, Select } from '../components/ui';
 import * as Icons from '../components/icons';
-import { useChaincodes } from '../lib/hooks';
-import type { Chaincode } from '../lib/api';
+import { useContracts } from '../lib/hooks';
+import type { Contract } from '../lib/api';
 
 // ─── Code templates ───────────────────────────────────────────────────────────
 
@@ -107,9 +107,9 @@ const TEMPLATES = [
 
 function ContractList({ onNew, onSelect }: {
   onNew: () => void;
-  onSelect: (c: Chaincode) => void;
+  onSelect: (c: Contract) => void;
 }) {
-  const { data: contracts, loading } = useChaincodes();
+  const { data: contracts, loading } = useContracts();
 
   return (
     <div>
@@ -175,7 +175,7 @@ function ContractList({ onNew, onSelect }: {
   );
 }
 
-function ContractCard({ contract, onClick }: { contract: Chaincode; onClick: () => void }) {
+function ContractCard({ contract, onClick }: { contract: Contract; onClick: () => void }) {
   const visible = contract.functions.slice(0, 4);
   const extra = contract.functions.length - visible.length;
 
@@ -224,7 +224,7 @@ function ContractCard({ contract, onClick }: { contract: Chaincode; onClick: () 
 
 // ─── Detail view ──────────────────────────────────────────────────────────────
 
-function ContractDetail({ contract, onBack }: { contract: Chaincode; onBack: () => void }) {
+function ContractDetail({ contract, onBack }: { contract: Contract; onBack: () => void }) {
   const [tab, setTab] = useState('overview');
   const [inspectFn, setInspectFn] = useState<string | null>(null);
 
@@ -639,7 +639,7 @@ type View = 'list' | 'detail' | 'new';
 
 export function ContractsPage() {
   const [view, setView] = useState<View>('list');
-  const [selected, setSelected] = useState<Chaincode | null>(null);
+  const [selected, setSelected] = useState<Contract | null>(null);
 
   if (view === 'detail' && selected) {
     return <ContractDetail contract={selected} onBack={() => setView('list')} />;

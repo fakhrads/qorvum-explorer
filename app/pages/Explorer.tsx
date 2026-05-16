@@ -112,10 +112,10 @@ export function ExplorerPage() {
                 key: 'function_name', 
                 label: 'Function', 
                 render: (v: any, row: any) => {
-                  const chaincode = row.contract_id || row.chaincode;
+                  const contract = row.contract_id;
                   const fn = v || row.function;
                   return (
-                    <span className="font-mono text-xs"><span className="text-zinc-500">{chaincode}.</span>{fn}</span>
+                    <span className="font-mono text-xs"><span className="text-zinc-500">{contract}.</span>{fn}</span>
                   );
                 }
               },
@@ -144,7 +144,7 @@ export function ExplorerPage() {
     const id = Array.isArray(tx.tx_id) ? formatTxId(tx.tx_id) : (tx.tx_id || tx.id);
     const fullId = tx.fullId || id;
     const height = tx.block_num ?? tx.blockHeight ?? (txOriginBlock ? (txOriginBlock.header?.block_number ?? txOriginBlock.height) : undefined);
-    const chaincode = tx.contract_id || tx.chaincode;
+    const contract = tx.contract_id;
     const fn = tx.function_name || tx.function;
     const caller = tx.creator_msp_id || tx.caller;
     const timestamp = typeof tx.timestamp === 'number' ? new Date(tx.timestamp / 1_000_000).toISOString() : tx.timestamp;
@@ -191,7 +191,7 @@ export function ExplorerPage() {
                   #{height}
                 </span>
               } />
-              <DetailRow label="Chaincode" value={<Badge variant="info">{chaincode}</Badge>} />
+              <DetailRow label="Contract" value={<Badge variant="info">{contract}</Badge>} />
               <DetailRow label="Function" value={<span className="font-mono font-bold text-zinc-100">{fn}</span>} />
               <DetailRow label="Caller" value={<span className="text-zinc-300">{caller}</span>} />
               <DetailRow label="Channel" value={tx.channel_id || 'main-channel'} />
@@ -350,11 +350,11 @@ export function ExplorerPage() {
                   key: 'function_name', 
                   label: 'Function', 
                   render: (v: any, row: any) => {
-                    const chaincode = row.contract_id || row.chaincode;
+                    const contract = row.contract_id;
                     const fn = v || row.function;
                     return (
                       <span className="font-mono text-xs">
-                        <span className="text-zinc-500">{chaincode}.</span>
+                        <span className="text-zinc-500">{contract}.</span>
                         <span className="text-zinc-200">{fn}</span>
                       </span>
                     );

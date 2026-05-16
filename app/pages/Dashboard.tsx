@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardBody, StatCard, Badge, Table, HashDisplay, Progress } from '../components/ui';
 import * as Icons from '../components/icons';
-import { useHealth, useBlocks, useTransactions, useChaincodes, useWsEvents } from '../lib/hooks';
+import { useHealth, useBlocks, useTransactions, useContracts, useWsEvents } from '../lib/hooks';
 import { formatTxId } from '../lib/api';
 import { timeAgo } from '../lib/utils';
 
@@ -12,7 +12,7 @@ export function DashboardPage({ setPage }: { setPage: SetPage }) {
   const { nodeStatus } = useWsEvents();
   const { data: blocks } = useBlocks(7);
   const { data: transactions } = useTransactions(8);
-  const { data: chaincodes } = useChaincodes();
+  const { data: contracts } = useContracts();
   const [txPool] = useState(0);
   const [barHeights] = useState(() => Array.from({ length: 16 }, () => 10 + Math.random() * 40));
 
@@ -201,11 +201,11 @@ export function DashboardPage({ setPage }: { setPage: SetPage }) {
               key: 'function_name', 
               label: 'Function', 
               render: (v: any, row: any) => {
-                const chaincode = row.contract_id;
+                const contract = row.contract_id;
                 const fn = v;
                 return (
                   <span className="font-mono text-xs">
-                    <span className="text-zinc-500">{chaincode}.</span>
+                    <span className="text-zinc-500">{contract}.</span>
                     <span className="text-zinc-200">{fn}</span>
                   </span>
                 );
@@ -244,16 +244,16 @@ export function DashboardPage({ setPage }: { setPage: SetPage }) {
         )}
       </Card>
 
-      {/* Bottom: Chaincodes + Quick Actions */}
+      {/* Bottom: Contracts + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <Icons.Code size={15} className="text-emerald-400" />
             <span className="text-sm font-semibold">Active Contracts</span>
           </CardHeader>
-          {chaincodes && chaincodes.length > 0 ? (
+          {contracts && contracts.length > 0 ? (
             <div className="divide-y divide-zinc-800/50">
-              {chaincodes.map((cc) => (
+              {contracts.map((cc) => (
                 <div key={cc.id} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
