@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from './api';
-import type { HealthResponse, Block, Transaction, LedgerRecord, User, Contract, CertsResponse } from './api';
+import type { HealthResponse, StatsResponse, Block, Transaction, LedgerRecord, User, Contract, CertsResponse, MetricsResponse } from './api';
 import { useWsContext } from './ws-context';
 export type { RealtimeEvent } from './ws-context';
 
@@ -85,6 +85,21 @@ export function useHealth(intervalMs = 15000) {
   } : polling.data;
 
   return { ...polling, data };
+}
+
+export function useStats(intervalMs = 30000): HookResult<StatsResponse> {
+  const { latestBlock } = useWsContext();
+  const result = usePolling(() => api.getStats(), intervalMs, []);
+  // Re-fetch whenever a new block is committed so total_tx stays fresh
+  const seenRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!latestBlock) return;
+    if (latestBlock.block_num === seenRef.current) return;
+    seenRef.current = latestBlock.block_num;
+    result.refetch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestBlock]);
+  return result;
 }
 
 // Initial HTTP fetch once, then WS push for real-time updates — no polling.
@@ -194,6 +209,32 @@ export function useContracts(intervalMs = 60000) {
 
 export function useCertificates(intervalMs = 60000) {
   return usePolling<CertsResponse>(() => api.listCertificates(), intervalMs);
+}
+
+export function useNodeMetrics(intervalMs = 5000) {
+  const [metrics, setMetrics] = useState<MetricsResponse['data'] | null>(null);
+  const [latency, setLatency] = useState<number | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const measure = useCallback(async () => {
+    const t0 = performance.now();
+    try {
+      const result = await api.getMetrics();
+      const rtt = Math.round(performance.now() - t0);
+      setMetrics(result.data);
+      setLatency(rtt);
+    } catch {
+      // keep previous values on transient error
+    }
+  }, []);
+
+  useEffect(() => {
+    measure();
+    timerRef.current = setInterval(measure, intervalMs);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [measure, intervalMs]);
+
+  return { metrics, latency };
 }
 
 // Backwards-compat re-exports

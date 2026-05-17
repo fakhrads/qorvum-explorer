@@ -192,8 +192,19 @@ export interface StatsResponse {
   data: {
     channel: string;
     block_height: number | null;
+    total_tx: number;
     mode: 'dev' | 'consensus';
     version: string;
+  };
+}
+
+export interface MetricsResponse {
+  success: boolean;
+  data: {
+    cpu_percent: number;
+    mem_used_mb: number;
+    mem_total_mb: number;
+    mem_percent: number;
   };
 }
 
@@ -409,6 +420,30 @@ export const api = {
     return res.data.contracts;
   },
 
+  async deployContract(contractId: string, wasmFile: File): Promise<{ contract_id: string; size_bytes: number; status: string }> {
+    const { baseUrl } = getConfig();
+    const url = `${baseUrl}/api/v1/contracts/deploy`;
+    const headers = new Headers();
+    const authHeader = getAuthHeader();
+    if (authHeader) headers.set('Authorization', authHeader);
+
+    const form = new FormData();
+    form.append('contract_id', contractId);
+    form.append('wasm', wasmFile);
+
+    const response = await fetch(url, { method: 'POST', headers, body: form });
+    if (!response.ok) {
+      let message = response.statusText;
+      try {
+        const err = await response.json();
+        message = err?.error?.message || message;
+      } catch { /* ignore */ }
+      throw new ApiError(message, response.status);
+    }
+    const res = await response.json();
+    return res.data;
+  },
+
   // Admin / PKI
   async listUsers(): Promise<User[]> {
     const res = await request<{ success: boolean; data: { users: User[]; total: number } }>('/api/v1/admin/users');
@@ -440,5 +475,9 @@ export const api = {
 
   async getStats(): Promise<StatsResponse> {
     return request<StatsResponse>('/api/v1/stats');
+  },
+
+  async getMetrics(): Promise<MetricsResponse> {
+    return request<MetricsResponse>('/api/v1/metrics');
   },
 };

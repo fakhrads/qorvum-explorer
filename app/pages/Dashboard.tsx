@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardBody, StatCard, Badge, Table, HashDisplay, Progress } from '../components/ui';
 import * as Icons from '../components/icons';
-import { useHealth, useBlocks, useTransactions, useContracts, useWsEvents } from '../lib/hooks';
+import { useHealth, useStats, useBlocks, useTransactions, useContracts, useWsEvents } from '../lib/hooks';
 import { formatTxId } from '../lib/api';
 import { timeAgo } from '../lib/utils';
 
@@ -56,6 +56,7 @@ function TxVolumeChart({ latestBlock }: { latestBlock?: number }) {
 // ── Dashboard ────────────────────────────────────────────────────────────────
 export function DashboardPage({ setPage }: { setPage: SetPage }) {
   const { data: health } = useHealth();
+  const { data: chainStats } = useStats();
   const { nodeStatus } = useWsEvents();
   const { data: blocks } = useBlocks(7);
   const { data: transactions } = useTransactions(8);
@@ -63,7 +64,7 @@ export function DashboardPage({ setPage }: { setPage: SetPage }) {
   const [txPool] = useState(0);
   const [barHeights] = useState(() => Array.from({ length: 12 }, () => 10 + Math.random() * 40));
 
-  const totalTxCount = blocks?.reduce((sum: number, b: any) => sum + (b.metadata?.tx_count || 0), 0) ?? null;
+  const totalTxCount = chainStats?.data?.total_tx ?? null;
   const latestBlock = health?.data?.latest_block;
 
   const stats = [

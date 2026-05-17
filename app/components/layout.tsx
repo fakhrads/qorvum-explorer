@@ -3,6 +3,7 @@ import * as Icons from './icons';
 import { ConnectionBanner } from './ConnectionBanner';
 import { Modal, Button, Input, DetailRow, Badge } from './ui';
 import { useHealth } from '../lib/hooks';
+import { useWsContext } from '../lib/ws-context';
 import { getConfig, setConfig } from '../lib/config';
 
 export type Page =
@@ -217,9 +218,22 @@ export function TopBar({ dark, toggleDark, page, onLogout, setPage }: {
   const [searchFocus, setSearchFocus] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const { data: health, error: healthError, refetch } = useHealth();
+  const { events } = useWsContext();
   const config = getConfig();
+
+  // Increment unread whenever a new event arrives and panel is closed
+  const prevEventsLen = useRef(0);
+  useEffect(() => {
+    if (events.length > prevEventsLen.current) {
+      if (!notifOpen) setUnread(u => u + (events.length - prevEventsLen.current));
+    }
+    prevEventsLen.current = events.length;
+  }, [events, notifOpen]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -232,6 +246,18 @@ export function TopBar({ dark, toggleDark, page, onLogout, setPage }: {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [profileOpen]);
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [notifOpen]);
 
   const titles: Record<Page, string> = {
     dashboard: 'Dashboard',
@@ -289,12 +315,107 @@ export function TopBar({ dark, toggleDark, page, onLogout, setPage }: {
               </button>
             )}
 
-            {/* Bell */}
-            <button type="button" title="Notifications"
-              className="p-2 rounded-xl text-[var(--text-3)] hover:bg-[var(--raised)] hover:text-[var(--text)] transition-all relative">
-              <Icons.Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)]" />
-            </button>
+            {/* Bell + Notification panel */}
+            <div ref={notifRef} className="relative">
+              <button
+                type="button"
+                title="Notifications"
+                aria-label="Notifications"
+                onClick={() => { setNotifOpen(v => !v); setUnread(0); }}
+                className={`p-2 rounded-xl transition-all relative
+                  ${notifOpen ? 'bg-(--raised) text-(--text)' : 'text-(--text-3) hover:bg-(--raised) hover:text-(--text)'}`}
+              >
+                <Icons.Bell size={18} />
+                {unread > 0 && (
+                  <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 rounded-full bg-(--accent) text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-(--border) bg-(--surface) shadow-2xl shadow-black/20 z-50 overflow-hidden animate-slide-up">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-(--border)">
+                    <span className="text-sm font-bold text-(--text)">Notifications</span>
+                    <button
+                      type="button"
+                      title="Close notifications"
+                      aria-label="Close notifications"
+                      onClick={() => setNotifOpen(false)}
+                      className="text-(--text-3) hover:text-(--text) transition-colors"
+                    >
+                      <Icons.X size={14} />
+                    </button>
+                  </div>
+
+                  {/* List */}
+                  <div className="max-h-80 overflow-y-auto scrollbar-thin">
+                    {events.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-10 text-(--text-3)">
+                        <Icons.Bell size={24} className="mb-2 opacity-30" />
+                        <p className="text-xs">No events yet</p>
+                      </div>
+                    ) : (
+                      events.slice(0, 30).map((ev, i) => {
+                        const isBlock = ev.type === 'block';
+                        const isTx = ev.type === 'tx';
+                        const isStatus = ev.type === 'node_status' || ev.type === 'connected';
+                        return (
+                          <div key={i} className="flex items-start gap-3 px-4 py-3 border-b border-(--border)/50 last:border-0 hover:bg-(--raised) transition-colors">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5
+                              ${isBlock ? 'bg-blue-500/10 text-blue-400'
+                              : isTx ? 'bg-(--accent-bg) text-(--accent)'
+                              : 'bg-emerald-500/10 text-emerald-400'}`}>
+                              {isBlock && <Icons.Cube size={13} />}
+                              {isTx && <Icons.Activity size={13} />}
+                              {isStatus && <Icons.Server size={13} />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              {isBlock && (
+                                <>
+                                  <p className="text-xs font-semibold text-(--text)">Block #{ev.data?.block_num ?? '—'} committed</p>
+                                  <p className="text-[11px] text-(--text-3) mt-0.5">{ev.data?.tx_count ?? 0} transaction(s)</p>
+                                </>
+                              )}
+                              {isTx && (
+                                <>
+                                  <p className="text-xs font-semibold text-(--text) truncate">
+                                    {ev.data?.contract_id ?? '—'} · {ev.data?.function_name ?? '—'}
+                                  </p>
+                                  <p className="text-[11px] text-(--text-3) mt-0.5 truncate">by {ev.data?.caller ?? 'unknown'}</p>
+                                </>
+                              )}
+                              {isStatus && (
+                                <>
+                                  <p className="text-xs font-semibold text-(--text)">Node status</p>
+                                  <p className="text-[11px] text-(--text-3) mt-0.5">
+                                    {ev.data?.peer_count ?? 0} peer(s) · {ev.data?.mode ?? 'dev'} mode
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  {events.length > 0 && setPage && (
+                    <div className="px-4 py-2.5 border-t border-(--border)">
+                      <button
+                        type="button"
+                        onClick={() => { setPage('events'); setNotifOpen(false); }}
+                        className="text-xs text-(--accent) hover:underline w-full text-center"
+                      >
+                        View all in Event Log →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="w-px h-6 bg-[var(--border)] mx-1" />
 

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardBody, Badge, Progress } from '../components/ui';
 import * as Icons from '../components/icons';
-import { useHealth, useWsEvents } from '../lib/hooks';
+import { useHealth, useWsEvents, useNodeMetrics } from '../lib/hooks';
 import { getConfig } from '../lib/config';
 
 
 export function NodesPage() {
   const { data: health } = useHealth();
   const { nodeStatus } = useWsEvents();
+  const { metrics, latency } = useNodeMetrics(5000);
   const [selected, setSelected] = useState<any | null>(null);
 
   const primaryRole = health?.data?.mode === 'consensus' ? 'validator' : 'gateway';
@@ -34,9 +35,9 @@ export function NodesPage() {
       role: primaryRole,
       status: health.data.status === 'ok' ? 'online' : 'offline',
       ip: getConfig().baseUrl,
-      cpu: 0,
-      mem: 0,
-      latency: 0,
+      cpu: metrics ? Math.round(metrics.cpu_percent) : 0,
+      mem: metrics ? metrics.mem_percent : 0,
+      latency: latency ?? 0,
       blocks: health.data.latest_block ?? 0,
       peers: nodeStatus?.peer_count ?? 0,
       uptime: 'Active',
@@ -207,6 +208,9 @@ export function NodesPage() {
                 ['Latest Block', `#${selected.blocks}`],
                 ['Connected Peers', selected.peers],
                 ['Latency', `${selected.latency}ms`],
+                ...(selected.id === 'node-primary' && metrics
+                  ? [['Memory', <span className="font-mono text-xs text-(--text-2)">{metrics.mem_used_mb} / {metrics.mem_total_mb} MB</span>]]
+                  : []),
                 ...(selected.peer_id ? [['Peer ID', <span className="font-mono text-[10px] text-[var(--text-3)] break-all">{selected.peer_id}</span>]] : []),
               ].map(([k, v], i) => (
                 <div key={i} className="p-3 rounded-xl bg-[var(--raised)] border border-[var(--border)]">

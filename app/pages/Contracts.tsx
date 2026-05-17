@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardBody, Badge, Tabs, Button, Input, Select } from '../components/ui';
 import * as Icons from '../components/icons';
 import { useContracts } from '../lib/hooks';
+import { api } from '../lib/api';
 import type { Contract } from '../lib/api';
 
 // ─── Code templates ───────────────────────────────────────────────────────────
@@ -1146,6 +1147,12 @@ function NewContract({ onBack, onDeployed }: { onBack: () => void; onDeployed: (
   const [deployStep, setDeployStep] = useState(0);
   const [consoleLog, setConsoleLog] = useState<{ time: string; msg: string; type: string }[]>([]);
 
+  // Deploy state
+  const [contractId, setContractId]   = useState('');
+  const [wasmFile, setWasmFile]       = useState<File | null>(null);
+  const [deploying, setDeploying]     = useState(false);
+  const [deployError, setDeployError] = useState<string | null>(null);
+
   const lineCount = code.split('\n').length;
   const addLog = (msg: string, type = 'info') =>
     setConsoleLog(prev => [...prev, { time: new Date().toISOString().slice(11, 23), msg, type }]);
@@ -1298,7 +1305,7 @@ function NewContract({ onBack, onDeployed }: { onBack: () => void; onDeployed: (
             <div className="max-w-lg mx-auto py-6">
               {/* Step indicator */}
               <div className="flex items-center gap-2 mb-8">
-                {['Configuration', 'Verification', 'Deploy'].map((s, i) => (
+                {['Configure', 'Confirm', 'Done'].map((s, i) => (
                   <React.Fragment key={i}>
                     <div className={`flex items-center gap-1.5 ${i <= deployStep ? 'text-[var(--accent)]' : 'text-[var(--text-3)]'}`}>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border
@@ -1315,18 +1322,51 @@ function NewContract({ onBack, onDeployed }: { onBack: () => void; onDeployed: (
               {deployStep === 0 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-medium text-[var(--text-3)] mb-1.5 block">Contract Name</label>
-                    <Input placeholder="my-contract" className="w-full" />
+                    <label className="text-xs font-medium text-[var(--text-3)] mb-1.5 block">Contract ID</label>
+                    <Input
+                      placeholder="e.g. todo-as"
+                      className="w-full"
+                      value={contractId}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContractId(e.target.value)}
+                    />
+                    <p className="text-[11px] text-[var(--text-3)] mt-1">Unique identifier — used in invoke/query calls</p>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-[var(--text-3)] mb-1.5 block">Version</label>
-                    <Input placeholder="1.0.0" className="w-full" />
+                    <label className="text-xs font-medium text-[var(--text-3)] mb-1.5 block">WASM File</label>
+                    <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors
+                      ${wasmFile ? 'border-[var(--accent)] bg-[var(--accent-bg)]' : 'border-dashed border-[var(--border)] bg-[var(--raised)] hover:border-[var(--accent)]'}`}>
+                      <Icons.Upload size={16} className={wasmFile ? 'text-[var(--accent)]' : 'text-[var(--text-3)]'} />
+                      <span className="text-sm text-[var(--text-2)] truncate">
+                        {wasmFile ? wasmFile.name : 'Click to upload .wasm file'}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".wasm"
+                        className="hidden"
+                        onChange={(e) => setWasmFile(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                    {wasmFile && (
+                      <p className="text-[11px] text-[var(--text-3)] mt-1">{(wasmFile.size / 1024).toFixed(1)} KB</p>
+                    )}
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-[var(--text-3)] mb-1.5 block">Channel</label>
-                    <Select options={['main-channel']} className="w-full" />
-                  </div>
-                  <Button variant="default" onClick={() => setDeployStep(1)} className="w-full">Next →</Button>
+                  {deployError && (
+                    <p className="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">
+                      {deployError}
+                    </p>
+                  )}
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      if (!contractId.trim()) { setDeployError('Contract ID is required'); return; }
+                      if (!wasmFile) { setDeployError('Please select a .wasm file'); return; }
+                      setDeployError(null);
+                      setDeployStep(1);
+                    }}
+                    className="w-full"
+                  >
+                    Next →
+                  </Button>
                 </div>
               )}
 
@@ -1334,11 +1374,10 @@ function NewContract({ onBack, onDeployed }: { onBack: () => void; onDeployed: (
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-[var(--raised)] border border-[var(--border)] space-y-2.5">
                     {[
-                      ['Contract', 'my-contract'],
-                      ['Version', '1.0.0'],
-                      ['Channel', 'main-channel'],
-                      ['Runtime', 'Native Rust'],
-                      ['Functions detected', String(code.match(/^fn \w+/gm)?.length ?? '?')],
+                      ['Contract ID', contractId],
+                      ['File', wasmFile?.name ?? '—'],
+                      ['Size', wasmFile ? `${(wasmFile.size / 1024).toFixed(1)} KB` : '—'],
+                      ['Runtime', 'WASM'],
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between text-xs">
                         <span className="text-[var(--text-3)]">{k}</span>
@@ -1346,9 +1385,33 @@ function NewContract({ onBack, onDeployed }: { onBack: () => void; onDeployed: (
                       </div>
                     ))}
                   </div>
+                  {deployError && (
+                    <p className="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">
+                      {deployError}
+                    </p>
+                  )}
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setDeployStep(0)} className="flex-1">← Back</Button>
-                    <Button variant="default" onClick={() => setDeployStep(2)} className="flex-1">Deploy Now</Button>
+                    <Button variant="outline" onClick={() => { setDeployStep(0); setDeployError(null); }} className="flex-1" disabled={deploying}>← Back</Button>
+                    <Button
+                      variant="default"
+                      className="flex-1"
+                      disabled={deploying}
+                      onClick={async () => {
+                        if (!wasmFile) return;
+                        setDeploying(true);
+                        setDeployError(null);
+                        try {
+                          await api.deployContract(contractId, wasmFile);
+                          setDeployStep(2);
+                        } catch (err: any) {
+                          setDeployError(err?.message ?? 'Deploy failed');
+                        } finally {
+                          setDeploying(false);
+                        }
+                      }}
+                    >
+                      {deploying ? 'Deploying…' : 'Deploy Now'}
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1359,7 +1422,10 @@ function NewContract({ onBack, onDeployed }: { onBack: () => void; onDeployed: (
                     <Icons.CheckCircle size={28} className="text-[var(--accent)]" />
                   </div>
                   <h3 className="text-base font-bold text-[var(--text)] mb-1">Deployment Successful!</h3>
-                  <p className="text-sm text-[var(--text-3)] mb-5">Contract is now active on main-channel</p>
+                  <p className="text-sm text-[var(--text-3)] mb-1">
+                    <span className="font-mono text-[var(--accent)]">{contractId}</span> is now active
+                  </p>
+                  <p className="text-xs text-[var(--text-3)] mb-5">{wasmFile?.name} · {wasmFile ? `${(wasmFile.size / 1024).toFixed(1)} KB` : ''}</p>
                   <Button variant="default" onClick={onDeployed}>Back to Contracts</Button>
                 </div>
               )}
